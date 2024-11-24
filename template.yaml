@@ -1,8 +1,54 @@
 ---
 
 Resources:
-  LogGroup:
-    Type: AWS::Logs::LogGroup
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
     Properties:
-      LogGroupName: !Ref AWS::StackName
-      RetentionInDays: 90
+      UserPoolName: !Ref AWS::StackName
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireUppercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+      Schema:
+        - AttributeDataType: String
+          Name: email
+          Required: true
+          Mutable: false
+
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Ref AWS::StackName
+      UserPoolId: !Ref CognitoUserPool
+      GenerateSecret: false
+      SupportedIdentityProviders:
+        - COGNITO
+        - Google
+      CallbackURLs:
+        - https://your-app.example.com/callback
+      LogoutURLs:
+        - https://your-app.example.com/logout
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+      AllowedOAuthFlowsUserPoolClient: true
+
+  CognitoUserPoolIdentityProviderGoogle:
+    Type: AWS::Cognito::UserPoolIdentityProvider
+    Properties:
+      ProviderName: Google
+      ProviderType: Google
+      UserPoolId: !Ref CognitoUserPool
+      ProviderDetails:
+        client_id: your-google-client-id.apps.googleusercontent.com
+        client_secret: your-google-client-secret
+        authorize_scopes: email profile openid
+
